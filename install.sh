@@ -1,3 +1,5 @@
+#!/bin/bash
+
 ARGS=""
 IMAGE_NAME="crossarm"
 CROSS_SCRIPT_NAME="crossarm"
@@ -44,10 +46,10 @@ function set_arch {
 	case "$1" in
 		"arm" )
 			TOOLCHAIN_URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-linux-gnueabihf.tar.xz"
-			break ;;
+			;;
 		"aarch64" )  
 			TOOLCHAIN_URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz"
-			break ;;
+			;;
 		* ) perror "Unknown architecture, available: arm, aarch64"; exit
 	esac
 	CROSS_ARCH=$1
