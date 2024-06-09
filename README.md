@@ -71,4 +71,4 @@ set(CMAKE_TOOLCHAIN_FILE /opt/toolchain.cmake)
 ```
 
 ## TODO
-- [ ] Run the commands using oneliner without entering the docker
+- [x] ~Run the commands using oneliner without entering the docker~

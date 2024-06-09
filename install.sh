@@ -112,18 +112,51 @@ mkdir -p $CROSS_LIBS_PATH
 SRC_DIR=\$(pwd)
 CROSS_CHROOT=$CROSS_LIBS_PATH
 
-if [[ \$# -ge 1 ]]; then
-	SRC_DIR=\$1
-	if [[ "\$SRC_DIR" != /* ]]; then
-		SRC_DIR=\$(pwd)/\${SRC_DIR}
-	fi
-fi
+function print_help {
+	function print_arg {
+		printf "   %-35s - %s\\n" "\$1 | \$2" "\$3"
+	}
+	printf "%s <PATH> <ARGS>\\n\\n" \$0
+	printf " <PATH> - Folder to be opened in the crossarm environment\\n\\n"
+	printf " Arguments:\\n"
+	print_arg "-h" "--help" "Prints this help"
+	print_arg "-c" "--command <COMMAND>" "Run image with command"
+}
 
-docker run \
-	-v \${SRC_DIR}:/project \
-	-v \${CROSS_CHROOT}:/cross-chroot \
-	--rm \
-	-it ${IMAGE_NAME} 
+while true; do
+	if [[ -z \$1 ]]; then break; fi
+  case "\$1" in
+		-h | --help ) print_help; exit;;
+    -c | --command ) 
+			if [[ -z \$2 ]]; then 
+				echo "Missing command"
+				exit
+			fi
+			COMMAND="\$2"
+			shift 2 ;;
+    -- ) shift; break ;;
+    * ) SRC_DIR=\$1; 
+				if [[ "\$SRC_DIR" != /* ]]; then
+					SRC_DIR=\$(pwd)/\${SRC_DIR}
+				fi
+			shift ;;
+  esac
+done
+
+if [[ -z \$COMMAND ]]; then
+	docker run \
+		-v \${SRC_DIR}:/project \
+		-v \${CROSS_CHROOT}:/cross-chroot \
+		--rm \
+		-it ${IMAGE_NAME} 
+else
+	docker run \
+		-v \${SRC_DIR}:/project \
+		-v \${CROSS_CHROOT}:/cross-chroot \
+		--rm \
+		-it ${IMAGE_NAME} \
+		bash -c "\${COMMAND}"
+fi
 EOF
 
 chmod +x ${CROSS_SCRIPT_NAME}.sh
