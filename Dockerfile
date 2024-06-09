@@ -23,7 +23,6 @@ RUN mkdir toolchain && tar -xvf toolchain.tar.xz -C toolchain --strip-components
 FROM ubuntu:${IMAGE_VERSION} AS final 
 COPY --from=toolchain-preparation /tmp/toolchain /toolchain
 COPY toolchain.cmake /opt/toolchain.cmake
-RUN sed -i "s/toolchain_here/$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//')/" /opt/toolchain.cmake
 
 # Set timezone cuz cmake needs it, dunno why tho
 ENV TZ=UTC
@@ -46,10 +45,16 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
 
 RUN cp /usr/bin/python3 /usr/bin/python
 
-ENV PATH="${PATH}:/toolchain/bin"
+RUN export TOOLCHAIN=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
+	sed -i "s/toolchain_here/${TOOLCHAIN}/" /opt/toolchain.cmake && \
+	echo "TOOLCHAIN=${TOOLCHAIN}" >> ~/.bashrc
+
+RUN echo "export TOOLCHAIN=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//')" >> /root/.bashrc
+
+ENV PATH="/toolchain/bin:${PATH}"
 
 RUN mkdir -p /cross-chroot
 ENV LD_LIBRARY_PATH=/cross-chroot:$LD_LIBRARY_PATH
-ENV PATH="${PATH}:/cross-chroot/bin"
+ENV PATH="/cross-chroot/bin:${PATH}"
 
 WORKDIR /project
