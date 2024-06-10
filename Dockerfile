@@ -45,16 +45,15 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
 
 RUN cp /usr/bin/python3 /usr/bin/python
 
-RUN export TOOLCHAIN=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
-	sed -i "s/toolchain_here/${TOOLCHAIN}/" /opt/toolchain.cmake && \
-	echo "TOOLCHAIN=${TOOLCHAIN}" >> ~/.bashrc
+RUN export CROSS_COMPILE=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
+	sed -i "s/toolchain_here/${CROSS_COMPILE}/" /opt/toolchain.cmake && \
+	echo "export CROSS_COMPILE=${CROSS_COMPILE}" >> /root/.bashrc
 
-RUN echo "export TOOLCHAIN=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//')" >> /root/.bashrc
 
 ENV PATH="/toolchain/bin:${PATH}"
 
-RUN mkdir -p /cross-chroot
-ENV LD_LIBRARY_PATH=/cross-chroot:$LD_LIBRARY_PATH
-ENV PATH="/cross-chroot/bin:${PATH}"
+RUN mkdir -p /cross-sysroot
+ENV LD_LIBRARY_PATH=/cross-sysroot:$LD_LIBRARY_PATH
+ENV PATH="/cross-sysroot/bin:${PATH}"
 
 WORKDIR /project

@@ -37,7 +37,7 @@ function print_help {
 	print_arg "-h" "--help" "Prints this help"
 	print_arg "-n" "--no-cache" "Build docker image without caching"
 	print_arg "-u" "--uninstall" "Uninstall script"
-	print_arg "-p" "--purge" "Remove chroot (has to be combined with uninstall, otherwise wont work)"
+	print_arg "-p" "--purge" "Remove sysroot (has to be combined with uninstall, otherwise wont work)"
 	print_arg "-a" "--architecture <ARCHITECTURE>" "Build crosscompiling image for architecture. Available archs: arm, aarch64 (default: $DEFAULT_ARCH)"
 }
 
@@ -84,11 +84,11 @@ if [[ ! -z $UNINSTALL ]]; then
 	psuccess "Removing ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}"
 	rm -r ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}
 	psuccess "Removing docker image ${IMAGE_NAME}"
-	docker rmi ${IMAGE_NAME}
+	docker rmi -f ${IMAGE_NAME}
 
 	if [[ ! -z $PURGE ]]; then
-		psuccess "Removing chroot ${CROSS_CHROOT}"
-		rm -r ${CROSS_CHROOT}
+		psuccess "Removing sysroot ${CROSS_SYSROOT}"
+		rm -r ${CROSS_SYSROOT}
 		
 	fi
 	psuccess "${IMAGE_NAME} has been successfully uninstalled"
@@ -102,7 +102,7 @@ docker build $ARGS \
 	--build-arg "TOOLCHAIN_FOLDER=${TOOLCHAIN_FOLDER}" \
 	.
 
-CROSS_LIBS_PATH="/opt/${IMAGE_NAME}/chroot"
+CROSS_LIBS_PATH="/opt/${IMAGE_NAME}/sysroot"
 
 mkdir -p $CROSS_LIBS_PATH
 
@@ -110,7 +110,7 @@ mkdir -p $CROSS_LIBS_PATH
 #!/bin/bash
 
 SRC_DIR=\$(pwd)
-CROSS_CHROOT=$CROSS_LIBS_PATH
+CROSS_SYSROOT=$CROSS_LIBS_PATH
 
 function print_help {
 	function print_arg {
@@ -146,13 +146,13 @@ done
 if [[ -z \$COMMAND ]]; then
 	docker run \
 		-v \${SRC_DIR}:/project \
-		-v \${CROSS_CHROOT}:/cross-chroot \
+		-v \${CROSS_SYSROOT}:/cross-sysroot \
 		--rm \
 		-it ${IMAGE_NAME} 
 else
 	docker run \
 		-v \${SRC_DIR}:/project \
-		-v \${CROSS_CHROOT}:/cross-chroot \
+		-v \${CROSS_SYSROOT}:/cross-sysroot \
 		--rm \
 		-it ${IMAGE_NAME} \
 		bash -c "\${COMMAND}"
@@ -161,6 +161,6 @@ EOF
 
 chmod +x ${CROSS_SCRIPT_NAME}.sh
 psuccess "Installing to ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}"
-psuccess "Chroot is located at ${CROSS_LIBS_PATH}"
+psuccess "Sysroot is located at ${CROSS_LIBS_PATH}"
 mv ${CROSS_SCRIPT_NAME}.sh ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}
 psuccess "To enter the crosscompile environment run ${CROSS_SCRIPT_NAME}"
