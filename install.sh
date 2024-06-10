@@ -75,6 +75,8 @@ done
 
 CROSS_SCRIPT_NAME=${CROSS_SCRIPT_NAME}-${CROSS_ARCH}
 IMAGE_NAME=${IMAGE_NAME}-${CROSS_ARCH}
+CROSS_SHARED_VOLUME="/opt/${IMAGE_NAME}"
+CROSS_SYSROOT="${CROSS_SHARED_VOLUME}/sysroot"
 
 if [[ -z $ARCHITECTURE_SET ]]; then
 	pwarning "Using default architecture $DEFAULT_ARCH"
@@ -87,8 +89,8 @@ if [[ ! -z $UNINSTALL ]]; then
 	docker rmi -f ${IMAGE_NAME}
 
 	if [[ ! -z $PURGE ]]; then
-		psuccess "Removing sysroot ${CROSS_SYSROOT}"
-		rm -r ${CROSS_SYSROOT}
+		psuccess "Removing shared volume ${CROSS_SHARED_VOLUME}"
+		rm -r ${CROSS_SHARED_VOLUME}
 		
 	fi
 	psuccess "${IMAGE_NAME} has been successfully uninstalled"
@@ -102,15 +104,13 @@ docker build $ARGS \
 	--build-arg "TOOLCHAIN_FOLDER=${TOOLCHAIN_FOLDER}" \
 	.
 
-CROSS_LIBS_PATH="/opt/${IMAGE_NAME}/sysroot"
-
-mkdir -p $CROSS_LIBS_PATH
+mkdir -p $CROSS_SYSROOT
+chown -R $(logname):$(logname) ${CROSS_SHARED_VOLUME}
 
 << EOF > ${CROSS_SCRIPT_NAME}.sh cat
 #!/bin/bash
 
 SRC_DIR=\$(pwd)
-CROSS_SYSROOT=$CROSS_LIBS_PATH
 
 function print_help {
 	function print_arg {
@@ -146,13 +146,13 @@ done
 if [[ -z \$COMMAND ]]; then
 	docker run \
 		-v \${SRC_DIR}:/project \
-		-v \${CROSS_SYSROOT}:/cross-sysroot \
+		-v ${CROSS_SYSROOT}:/cross-sysroot \
 		--rm \
 		-it ${IMAGE_NAME} 
 else
 	docker run \
 		-v \${SRC_DIR}:/project \
-		-v \${CROSS_SYSROOT}:/cross-sysroot \
+		-v ${CROSS_SYSROOT}:/cross-sysroot \
 		--rm \
 		-it ${IMAGE_NAME} \
 		bash -c "\${COMMAND}"
@@ -161,6 +161,7 @@ EOF
 
 chmod +x ${CROSS_SCRIPT_NAME}.sh
 psuccess "Installing to ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}"
-psuccess "Sysroot is located at ${CROSS_LIBS_PATH}"
+psuccess "Shared volume is located at ${CROSS_SHARED_VOLUME}"
+psuccess "Sysroot is located at ${CROSS_SYSROOT}"
 mv ${CROSS_SCRIPT_NAME}.sh ${CROSS_SCRIPT_PATH}/${CROSS_SCRIPT_NAME}
 psuccess "To enter the crosscompile environment run ${CROSS_SCRIPT_NAME}"

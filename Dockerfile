@@ -56,4 +56,14 @@ RUN mkdir -p /cross-sysroot
 ENV LD_LIBRARY_PATH=/cross-sysroot:$LD_LIBRARY_PATH
 ENV PATH="/cross-sysroot/bin:${PATH}"
 
+# Create nonroot user
+ARG USER_NAME=crossarm
+ARG HOST_UID=1000
+ARG HOST_GID=1000
+RUN groupadd -g ${HOST_GID} ${USER_NAME} && useradd -g ${HOST_GID} -m -s /bin/bash -u ${HOST_UID} ${USER_NAME}
+
+RUN chown -R ${USER_NAME}:${USER_NAME} /cross-sysroot
+
+USER ${HOST_UID}:${HOST_GID}
+
 WORKDIR /project
