@@ -21,8 +21,6 @@ RUN mkdir toolchain && tar -xvf toolchain.tar.xz -C toolchain --strip-components
 
 # FINAL
 FROM ubuntu:${IMAGE_VERSION} AS final 
-COPY --from=toolchain-preparation /tmp/toolchain /toolchain
-COPY toolchain.cmake /opt/toolchain.cmake
 
 # Set timezone cuz cmake needs it, dunno why tho
 ENV TZ=UTC
@@ -45,13 +43,9 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
 
 RUN cp /usr/bin/python3 /usr/bin/python
 
-RUN export CROSS_COMPILE=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
-	sed -i "s/toolchain_here/${CROSS_COMPILE}/" /opt/toolchain.cmake && \
-	echo "export CROSS_COMPILE=${CROSS_COMPILE}" >> /root/.bashrc
-
-
-ENV PATH="/toolchain/bin:${PATH}"
-
+COPY --from=toolchain-preparation /tmp/toolchain /toolchain
+COPY toolchain.cmake /opt/toolchain.cmake
+	
 RUN mkdir -p /cross-sysroot
 ENV LD_LIBRARY_PATH=/cross-sysroot:$LD_LIBRARY_PATH
 ENV PATH="/cross-sysroot/bin:${PATH}"
@@ -63,7 +57,15 @@ ARG HOST_GID=1000
 RUN groupadd -g ${HOST_GID} ${USER_NAME} && useradd -g ${HOST_GID} -m -s /bin/bash -u ${HOST_UID} ${USER_NAME}
 
 RUN chown -R ${USER_NAME}:${USER_NAME} /cross-sysroot
+RUN chown -R ${USER_NAME}:${USER_NAME} /toolchain
+RUN chown -R ${USER_NAME}:${USER_NAME} /opt
 
 USER ${HOST_UID}:${HOST_GID}
 
+RUN export CROSS_COMPILE=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
+	sed -i "s/toolchain_here/${CROSS_COMPILE}/" /opt/toolchain.cmake && \
+	echo "export CROSS_COMPILE=${CROSS_COMPILE}" >> /home/crossarm/.bashrc && \
+	echo "export SYSROOT=/cross-sysroot/$(echo $CROSS_COMPILE | rev | cut -c2- | rev)" >> /home/crossarm/.bashrc
+
 WORKDIR /project
+ENTRYPOINT cp -R /toolchain/* /cross-sysroot/ && /bin/bash
