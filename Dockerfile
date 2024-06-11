@@ -29,6 +29,7 @@ RUN echo "$TZ" > /etc/timezone
 
 RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
 	tzdata \
+	rsync \
 	pkg-config \
 	git \
 	make \
@@ -47,8 +48,6 @@ COPY --from=toolchain-preparation /tmp/toolchain /toolchain
 COPY toolchain.cmake /opt/toolchain.cmake
 	
 RUN mkdir -p /cross-sysroot
-ENV LD_LIBRARY_PATH=/cross-sysroot:$LD_LIBRARY_PATH
-ENV PATH="/cross-sysroot/bin:${PATH}"
 
 # Create nonroot user
 ARG USER_NAME=crossarm
@@ -63,9 +62,13 @@ RUN chown -R ${USER_NAME}:${USER_NAME} /opt
 USER ${HOST_UID}:${HOST_GID}
 
 RUN export CROSS_COMPILE=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//') && \
+	export SYSROOT=/cross-sysroot/$(echo $CROSS_COMPILE | rev | cut -c2- | rev) && \
 	sed -i "s/toolchain_here/${CROSS_COMPILE}/" /opt/toolchain.cmake && \
 	echo "export CROSS_COMPILE=${CROSS_COMPILE}" >> /home/crossarm/.bashrc && \
-	echo "export SYSROOT=/cross-sysroot/$(echo $CROSS_COMPILE | rev | cut -c2- | rev)" >> /home/crossarm/.bashrc
+	echo "export SYSROOT=${SYSROOT}" >> /home/crossarm/.bashrc && \
+	echo "export PATH=${PATH}:${SYSROOT}/bin:/cross-sysroot/bin" >> /home/crossarm/.bashrc && \
+	echo "export CMAKE_TOOLCHAIN=/opt/toolchain.cmake" >> /home/crossarm/.bashrc && \
+	echo "export LD_LIBRARY_PATH=${SYSROOT}:${LD_LIBRARY_PATH}" >> /home/crossarm/.bashrc
 
 WORKDIR /project
-ENTRYPOINT cp -R /toolchain/* /cross-sysroot/ && /bin/bash
+ENTRYPOINT rsync -avrq /toolchain/* /cross-sysroot/ && /bin/bash
