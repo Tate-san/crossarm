@@ -4,10 +4,10 @@ Just another crosscompiling tool for arm/aarch64 GNU/Linux.
 
 The aim of this project was to make crosscompiling as simple as possible.
 
-The docker image is using **Ubuntu 20.04** for better **GLIBC** support.
+The docker image is using **Ubuntu 20.04**.
 
 ### Toolchains 
-- Arm 13.2 Release 1
+- Arm 10.3 (2021.07)
 - Aarch64 10.3 (2021.07)
 
 # Installing
