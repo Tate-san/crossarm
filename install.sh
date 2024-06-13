@@ -153,7 +153,7 @@ else
 		-v ${CROSS_SYSROOT}:/cross-sysroot \
 		--rm \
 		-it ${IMAGE_NAME} \
-		bash -c "\${COMMAND}"
+		-- "\${COMMAND}"
 fi
 EOF
 

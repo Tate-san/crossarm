@@ -55,9 +55,7 @@ ARG HOST_UID=1000
 ARG HOST_GID=1000
 RUN groupadd -g ${HOST_GID} ${USER_NAME} && useradd -g ${HOST_GID} -m -s /bin/bash -u ${HOST_UID} ${USER_NAME}
 
-RUN chown -R ${USER_NAME}:${USER_NAME} /cross-sysroot
-RUN chown -R ${USER_NAME}:${USER_NAME} /toolchain
-RUN chown -R ${USER_NAME}:${USER_NAME} /opt
+RUN chown -R ${USER_NAME}:${USER_NAME} /cross-sysroot /toolchain /opt
 
 USER ${HOST_UID}:${HOST_GID}
 
@@ -71,4 +69,4 @@ RUN export CROSS_COMPILE=$(ls /toolchain/bin/ | grep -E 'gcc$' | sed 's/...$//')
 	echo "export LD_LIBRARY_PATH=${SYSROOT}:${LD_LIBRARY_PATH}" >> /home/crossarm/.bashrc
 
 WORKDIR /project
-ENTRYPOINT rsync -avrq /toolchain/* /cross-sysroot/ && /bin/bash
+ENTRYPOINT rsync -avrq /toolchain/* /cross-sysroot/ && test -z "$@" && /bin/bash -i || /bin/bash -i -c "$@"
