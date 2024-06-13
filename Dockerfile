@@ -49,6 +49,8 @@ COPY toolchain.cmake /opt/toolchain.cmake
 	
 RUN mkdir -p /cross-sysroot
 
+# Set root password
+RUN echo 'root:toor' | chpasswd
 # Create nonroot user
 ARG USER_NAME=crossarm
 ARG HOST_UID=1000
