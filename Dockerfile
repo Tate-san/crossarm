@@ -1,6 +1,7 @@
-ARG IMAGE_VERSION="20.04"
+ARG IMAGE="debian"
+ARG IMAGE_VERSION="latest"
 
-FROM ubuntu:${IMAGE_VERSION} AS toolchain-preparation
+FROM ${IMAGE}:${IMAGE_VERSION} AS toolchain-preparation
 
 WORKDIR /tmp
 
@@ -9,18 +10,13 @@ RUN apt update && apt install -y \
 	tar \
 	xz-utils
 
-# ARM32
-#ARG arm_url="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu/13.2.rel1/binrel/arm-gnu-toolchain-13.2.rel1-x86_64-arm-none-linux-gnueabihf.tar.xz"
-
-# ARM64
-# GLIBC 2.30
-ARG TOOLCHAIN_URL="https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-a/10.3-2021.07/binrel/gcc-arm-10.3-2021.07-x86_64-aarch64-none-linux-gnu.tar.xz"
+ARG TOOLCHAIN_URL=""
 
 RUN wget $TOOLCHAIN_URL -O toolchain.tar.xz
 RUN mkdir toolchain && tar -xvf toolchain.tar.xz -C toolchain --strip-components=1
 
 # FINAL
-FROM ubuntu:${IMAGE_VERSION} AS final 
+FROM ${IMAGE}:${IMAGE_VERSION} AS final 
 
 # Set timezone cuz cmake needs it, dunno why tho
 ENV TZ=UTC
@@ -37,7 +33,6 @@ RUN DEBIAN_FRONTEND=noninteractive apt update && apt install -y \
 	libssl-dev \
 	cmake \
 	python3 \
-	python3-distutils \
 	libclang-dev \
 	clang \
 	ninja-build
