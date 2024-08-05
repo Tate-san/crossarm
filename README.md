@@ -4,11 +4,11 @@ Just another crosscompiling tool for arm/aarch64 GNU/Linux.
 
 The aim of this project was to make crosscompiling as simple as possible.
 
-The docker image is using **Ubuntu 20.04**.
+The docker image is using **Debian:latest**.
 
 ### Toolchains 
-- Arm 10.3 (2021.07)
-- Aarch64 10.3 (2021.07)
+- Arm 7.1
+- Aarch64 10.3
 
 # Installing
 You can easily install CrossArm using the build script
