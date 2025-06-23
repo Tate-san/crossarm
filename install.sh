@@ -116,8 +116,15 @@ BUILD_ARGS+=(
   .
 )
 
+if docker buildx version &>/dev/null; then
+    DOCKER_BUILD_CMD=(docker buildx build)
+else
+    DOCKER_BUILD_CMD=(docker build)
+fi
+
+
 psuccess "Building Docker image ${IMAGE_NAME}"
-docker build "${BUILD_ARGS[@]}"
+"${DOCKER_BUILD_CMD[@]}" "${BUILD_ARGS[@]}"
 
 ### Prepare shared volume ###
 mkdir -p "${CROSS_SHARED_VOLUME}"
